@@ -39,7 +39,11 @@ class TrashmailBlacklist {
         }
 
         $api = $this->apiCall($domain);
-        if($api['api']['status'] == 'blacklisted') {
+        if($api['http_code'] != 200) {
+            trigger_error('Trashmail-Blacklist: response status code not 200', E_USER_WARNING);
+            return false;
+        }
+        if($api['status'] == 'blacklisted') {
             return true;
         }
         return false;
@@ -56,10 +60,12 @@ class TrashmailBlacklist {
         curl_setopt($curl, CURLOPT_FOLLOWLOCATION, 0);
         curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, $this->verifySSL);
         $result = curl_exec($curl);
-        $info = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
         curl_close($curl);
         
-        return ['api' => json_decode($result, true), 'http_code' => $info];
+        $result = json_decode($result, true);
+        $result['http_code'] = $httpCode;
+        return $result;
     }
 
 }
